@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ขอบคุณที่สั่งซื้อ — Body Scent</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Page-specific styles (thank you) */
+    .thanks {
+      display: flex;
+      align-items: center;
+      min-height: calc(100vh - 76px - 120px);
+      text-align: center;
+    }
+    .thanks p { max-width: 460px; margin: var(--space-3) auto var(--space-4); }
+    @media (max-width: 768px) { .thanks { min-height: calc(100vh - 64px - 120px); } }
+    @media (max-width: 480px) { .nav { display: flex; gap: var(--space-2); } }
+  </style>
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="container">
+      <a class="brand" href="index.html">BODY SCENT</a>
+      <nav class="nav" aria-label="เมนูหลัก">
+        <a href="index.html">หน้าแรก</a>
+        <a href="product.html">สินค้า</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="thanks">
+    <div class="container">
+      <h1 style="font-size: clamp(2rem, 3vw + 1rem, 3rem);">ขอบคุณที่สั่งซื้อ</h1>
+      <hr class="rule">
+      <p>เราได้รับคำสั่งซื้อของคุณแล้ว และจะติดต่อกลับทางเบอร์โทรหรือ Line ที่ให้ไว้เพื่อยืนยันรายการ</p>
+      <a class="btn" href="index.html">กลับหน้าแรก</a>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">&copy; Body Scent</div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,261 @@
+/* ==========================================================
+   Body Scent — script.js (shared by every page)
+   Each section runs only if its page's elements exist.
+   ========================================================== */
+
+const APPS_SCRIPT_URL =
+  'https://script.google.com/macros/s/AKfycbzuGePPQTdkp6qRtsDDSXmR0v6eyPem5u_xl2syTGzSNPx8oJ4u4EE9StINwz0KLha6Mw/exec';
+
+const SHEET_CSV_URL =
+  'https://docs.google.com/spreadsheets/d/e/2PACX-1vR31kxQpIk_SBu9TRfFU8sMGHGnFm4cUBEzXubo9NILCIHjUN9m8PjGcRVh_r4QZGfz91QhmE-L_FKA/pub?gid=0&single=true&output=csv';
+
+const MOODS = [
+  { key: 'all', label: 'ทั้งหมด' },
+  { key: 'fresh', label: 'Fresh' },
+  { key: 'sweet', label: 'Sweet' },
+  { key: 'confident', label: 'Confident' },
+  { key: 'romance', label: 'Romance' }
+];
+
+const TYPE_LABEL = { spray: 'น้ำหอมฉีดตัว', rollon: 'โรลออน' };
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (document.getElementById('product-list')) initProductPage();
+  if (document.getElementById('orderForm')) initOrderPage();
+  if (document.querySelector('#ordersTable tbody')) initAdminPage();
+});
+
+/* ---------- Helpers ---------- */
+
+function el(tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text !== undefined) node.textContent = text;
+  return node;
+}
+
+function formatPrice(value) {
+  const n = Number(String(value).replace(/[^\d.]/g, ''));
+  return Number.isFinite(n) && String(value).trim() !== '' ? n.toLocaleString('th-TH') : String(value);
+}
+
+/* ==========================================================
+   1) product.html — product cards + mood filter
+   ========================================================== */
+
+function initProductPage() {
+  const filterBar = document.getElementById('filter-bar');
+  const list = document.getElementById('product-list');
+  let products = [];
+
+  const params = new URLSearchParams(window.location.search);
+  const requested = (params.get('mood') || 'all').toLowerCase();
+  let activeMood = MOODS.some(m => m.key === requested) ? requested : 'all';
+
+  function renderFilters() {
+    if (!filterBar) return;
+    filterBar.innerHTML = '';
+    MOODS.forEach(m => {
+      const btn = el('button', 'filter-btn' + (m.key === activeMood ? ' is-active' : ''));
+      btn.type = 'button';
+      btn.dataset.mood = m.key;
+      if (m.key !== 'all') btn.appendChild(el('span', 'dot dot--' + m.key));
+      btn.appendChild(document.createTextNode(m.label));
+      btn.addEventListener('click', () => {
+        activeMood = m.key;
+        renderFilters();
+        renderProducts();
+      });
+      filterBar.appendChild(btn);
+    });
+  }
+
+  function createCard(p) {
+    const card = el('article', 'product-card');
+
+    const media = el('div', 'product-card__media');
+    const img = el('img');
+    img.src = p.image;
+    img.alt = p.name;
+    img.loading = 'lazy';
+    media.appendChild(img);
+
+    const body = el('div', 'product-card__body');
+
+    const mood = el('div', 'product-card__mood');
+    mood.appendChild(el('span', 'dot dot--' + p.mood));
+    mood.appendChild(el('span', '', p.mood.charAt(0).toUpperCase() + p.mood.slice(1)));
+
+    const name = el('h3', 'product-card__name', p.name);
+    const desc = el('p', 'product-card__desc', p.description || '');
+
+    const meta = el('div', 'product-card__meta');
+    meta.appendChild(el('span', 'product-card__size', p.size || TYPE_LABEL[p.type] || ''));
+    const price = el('span', 'price', formatPrice(p.price));
+    price.appendChild(el('small', '', 'บาท'));
+    meta.appendChild(price);
+
+    const buy = el('a', 'btn btn--gold btn--block', 'สั่งซื้อ');
+    buy.href =
+      'order.html?item=' + encodeURIComponent(p.name) +
+      '&price=' + encodeURIComponent(p.price);
+
+    body.append(mood, name, desc, meta, buy);
+    card.append(media, body);
+    return card;
+  }
+
+  function renderProducts() {
+    const shown = activeMood === 'all' ? products : products.filter(p => p.mood === activeMood);
+    list.innerHTML = '';
+    if (!shown.length) {
+      list.appendChild(el('p', '', 'ไม่พบสินค้าในหมวดนี้'));
+      return;
+    }
+    shown.forEach(p => list.appendChild(createCard(p)));
+  }
+
+  renderFilters();
+
+  fetch('products.json')
+    .then(res => {
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return res.json();
+    })
+    .then(data => {
+      products = data;
+      renderProducts();
+    })
+    .catch(error => {
+      console.error(error);
+      list.innerHTML = '';
+      list.appendChild(el('p', '', 'โหลดข้อมูลสินค้าไม่สำเร็จ กรุณารีเฟรชหน้านี้'));
+    });
+}
+
+/* ==========================================================
+   2) order.html — prefill from URL + submit to Apps Script
+   ========================================================== */
+
+function initOrderPage() {
+  const form = document.getElementById('orderForm');
+  const params = new URLSearchParams(window.location.search);
+
+  // Prefill (URLSearchParams already decodes Thai / spaces)
+  const itemsInput = document.getElementById('items');
+  const totalInput = document.getElementById('total');
+  if (itemsInput && params.get('item')) itemsInput.value = params.get('item');
+  if (totalInput && params.get('price')) totalInput.value = params.get('price');
+
+  form.addEventListener('submit', event => {
+    event.preventDefault();
+
+    const payload = {
+      customerName: document.getElementById('customerName').value.trim(),
+      contact: document.getElementById('contact').value.trim(),
+      items: document.getElementById('items').value.trim(),
+      total: document.getElementById('total').value.trim(),
+      note: document.getElementById('note').value.trim()
+    };
+
+    const submitBtn = form.querySelector('[type="submit"]');
+    if (submitBtn) submitBtn.disabled = true;
+
+    fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    })
+    .then(() => { window.location.href = 'thankyou.html'; })
+    .catch(error => {
+      console.error(error);
+      alert('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง');
+      if (submitBtn) submitBtn.disabled = false;
+    });
+  });
+}
+
+/* ==========================================================
+   3) admin.html — orders table from published Google Sheet CSV
+   ========================================================== */
+
+// Minimal CSV parser: handles quoted fields, "" escapes, commas and
+// line breaks inside quotes, and both \n and \r\n line endings.
+function parseCSV(text) {
+  const rows = [];
+  let row = [];
+  let field = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+
+    if (inQuotes) {
+      if (c === '"') {
+        if (text[i + 1] === '"') { field += '"'; i++; }
+        else inQuotes = false;
+      } else {
+        field += c;
+      }
+    } else if (c === '"') {
+      inQuotes = true;
+    } else if (c === ',') {
+      row.push(field); field = '';
+    } else if (c === '\n' || c === '\r') {
+      if (c === '\r' && text[i + 1] === '\n') i++;
+      row.push(field); field = '';
+      rows.push(row); row = [];
+    } else {
+      field += c;
+    }
+  }
+  if (field !== '' || row.length) { row.push(field); rows.push(row); }
+
+  // Drop fully empty rows
+  return rows.filter(r => r.some(cell => cell.trim() !== ''));
+}
+
+function initAdminPage() {
+  const tbody = document.querySelector('#ordersTable tbody');
+
+  function showMessage(msg) {
+    tbody.innerHTML = '';
+    const tr = el('tr');
+    const td = el('td', '', msg);
+    td.colSpan = 6;
+    tr.appendChild(td);
+    tbody.appendChild(tr);
+  }
+
+  showMessage('กำลังโหลดข้อมูล...');
+
+  // Cache-buster so the published sheet isn't served stale
+  fetch(SHEET_CSV_URL + '&t=' + Date.now())
+    .then(res => {
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return res.text();
+    })
+    .then(text => {
+      const rows = parseCSV(text);
+      rows.shift(); // header row
+
+      if (!rows.length) { showMessage('ยังไม่มีรายการสั่งซื้อ'); return; }
+
+      // Sheet appends newest at the bottom → reverse so latest comes first
+      rows.reverse();
+
+      tbody.innerHTML = '';
+      rows.forEach(r => {
+        const tr = el('tr');
+        // Column order: timestamp, customerName, contact, items, total, note
+        for (let i = 0; i < 6; i++) {
+          const value = (r[i] || '').trim();
+          tr.appendChild(el('td', '', i === 4 ? formatPrice(value) : value));
+        }
+        tbody.appendChild(tr);
+      });
+    })
+    .catch(error => {
+      console.error(error);
+      showMessage('โหลดข้อมูลไม่สำเร็จ กรุณารีเฟรชหน้านี้');
+    });
+}

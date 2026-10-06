@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>รายการสั่งซื้อ — Body Scent</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Page-specific styles (admin) */
+    .page-head { padding-block: var(--space-5) var(--space-4); text-align: center; }
+
+    .table-wrap {
+      overflow-x: auto;
+      background: var(--white);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+    }
+    #ordersTable {
+      width: 100%;
+      min-width: 820px;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    #ordersTable th,
+    #ordersTable td {
+      padding: var(--space-2) var(--space-3);
+      text-align: left;
+      vertical-align: top;
+      border-bottom: 1px solid var(--line);
+    }
+    #ordersTable thead th {
+      font-weight: 500;
+      color: var(--bronze);
+      white-space: nowrap;
+      border-bottom: 1px solid var(--gold);
+      background: var(--cream);
+    }
+    #ordersTable tbody tr:last-child td { border-bottom: 0; }
+    #ordersTable tbody tr:hover td { background: var(--cream); }
+    #ordersTable td:nth-child(1) { white-space: nowrap; color: var(--ink-soft); }
+    #ordersTable td:nth-child(5) { white-space: nowrap; text-align: right; }
+    #ordersTable th:nth-child(5) { text-align: right; }
+
+    @media (max-width: 480px) { .nav { display: flex; gap: var(--space-2); } }
+  </style>
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="container">
+      <a class="brand" href="index.html">BODY SCENT</a>
+      <nav class="nav" aria-label="เมนูหลัก">
+        <a href="index.html">หน้าแรก</a>
+        <a href="product.html">สินค้า</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="page-head">
+      <div class="container">
+        <h1 style="font-size: clamp(2rem, 3vw + 1rem, 3rem);">รายการสั่งซื้อ</h1>
+        <hr class="rule">
+      </div>
+    </section>
+
+    <section class="section section--white" style="padding-top: var(--space-5);">
+      <div class="container">
+        <div class="table-wrap">
+          <table id="ordersTable">
+            <thead>
+              <tr>
+                <th>วันเวลา</th>
+                <th>ชื่อลูกค้า</th>
+                <th>เบอร์โทร/Line</th>
+                <th>รายการสินค้า</th>
+                <th>จำนวนเงินรวม</th>
+                <th>หมายเหตุ</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">&copy; Body Scent</div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

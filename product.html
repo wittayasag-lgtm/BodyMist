@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>สินค้าทั้งหมด — Body Scent</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Page-specific styles (product) */
+    .page-head { padding-block: var(--space-5) var(--space-4); text-align: center; }
+    .page-head p { max-width: 480px; margin-inline: auto; }
+    @media (max-width: 480px) { .nav { display: flex; gap: var(--space-2); } }
+  </style>
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="container">
+      <a class="brand" href="index.html">BODY SCENT</a>
+      <nav class="nav" aria-label="เมนูหลัก">
+        <a href="index.html">หน้าแรก</a>
+        <a href="product.html" aria-current="page">สินค้า</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="page-head">
+      <div class="container">
+        <h1 style="font-size: clamp(2rem, 3vw + 1rem, 3rem);">สินค้าทั้งหมด</h1>
+        <hr class="rule">
+        <p style="margin-top: var(--space-3);">เลือกกลิ่นตาม Mood ที่ใช่ ทั้งน้ำหอมฉีดตัวและโรลออน</p>
+      </div>
+    </section>
+
+    <section class="section section--white" style="padding-top: var(--space-5);">
+      <div class="container">
+        <div id="filter-bar" class="filters"></div>
+        <div id="product-list" class="product-grid"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">&copy; Body Scent</div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
